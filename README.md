@@ -1,0 +1,1 @@
+Run tests: docker compose run --rm test

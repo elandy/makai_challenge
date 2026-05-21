@@ -13,6 +13,7 @@ class JobInput(BaseModel):
     extract_keywords: bool = True
     generate_summary: bool = True
     callback_url: str | None = None
+    # email: str | None = None  # In case we implement email notification
 
 class JobResponse(BaseModel):
     """Used to return a job from get job endpoint"""

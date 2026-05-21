@@ -10,7 +10,7 @@ from shared.db.repositories import jobs as jobs_repository
 logger = logging.getLogger(__name__)
 
 
-async def process_job(db: AsyncSession, job_id: UUID) -> None:
+async def process_job(db: AsyncSession, job_id: UUID, notifier) -> None:
     logger.info(f"Starting processing for job {job_id}")
     job = await jobs_repository.get_by_id_for_worker(db, job_id)
     if not job:
@@ -53,8 +53,23 @@ async def process_job(db: AsyncSession, job_id: UUID) -> None:
                 "processing",
             ],
         }
+        logger.info(f"completing job callback_url={job.payload.get('callback_url')}")
 
         await jobs_repository.complete_job(db=db, job_id=job_id, result=result)
+        job = await jobs_repository.get_by_id_for_worker(db, job_id)
+
+        if notifier and job:
+            logger.info(f"NOTIFYING callback_url={job.payload.get('callback_url')}")
+            await notifier.emit(
+                user_id=str(job.user_id),
+                event="job.completed",
+                payload={
+                    "callback_url": job.payload.get("callback_url"),
+                    "job_id": str(job_id),
+                    "result": result,
+                },
+            )
+
         logger.info(f"Successfully completed job {job_id}")
 
     except asyncio.CancelledError:
@@ -65,6 +80,18 @@ async def process_job(db: AsyncSession, job_id: UUID) -> None:
         logger.exception(f"Job {job_id} failed")
         await jobs_repository.fail_job(db=db, job_id=job_id, error=str(e))
 
+        job = await jobs_repository.get_by_id_for_worker(db, job_id)
+
+        if notifier and job:
+            await notifier.emit(
+                user_id=str(job.user_id),
+                event="job.failed",
+                payload={
+                    "callback_url": job.payload.get("callback_url"),
+                    "job_id": str(job_id),
+                    "error": str(e),
+                },
+            )
 
 async def check_cancellation(db: AsyncSession, job_id: UUID) -> None:
     job = await jobs_repository.get_by_id_for_worker(db, job_id)

@@ -45,7 +45,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/jobs
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     ports:
       - "8000:8000"
     command: >
@@ -63,11 +63,13 @@ services:
     container_name: async-jobs-worker
     restart: unless-stopped
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/jobs
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     command: >
       uv run python -m apps.worker.main
     volumes:
@@ -84,7 +86,7 @@ services:
     environment:
       PYTHONPATH: /app
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/jobs_test
-      RABBITMQ_URL: amqp://guest:guest@async-jobs-rabbitmq:5672/
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     command: /app/.venv/bin/pytest -q
     volumes:
       - .:/app

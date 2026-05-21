@@ -1,5 +1,6 @@
 import uuid
 from typing import List
+import httpx
 
 from fastapi import FastAPI, Depends
 from sqlalchemy.ext.asyncio import AsyncSession

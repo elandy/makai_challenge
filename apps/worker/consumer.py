@@ -9,6 +9,12 @@ from aio_pika.abc import AbstractIncomingMessage
 
 from apps.worker.processor import process_job
 from shared.db.session import AsyncSessionLocal
+from apps.notifier.factory import build_notifier
+import httpx
+
+http_client = httpx.AsyncClient()
+
+notifier = build_notifier()
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +41,7 @@ async def handle_message(message: AbstractIncomingMessage) -> None:
             job_id = UUID(payload["job_id"])
             logger.info(f"Received job {job_id}")
             async with AsyncSessionLocal() as db:
-                await process_job(db, job_id)
+                await process_job(db, job_id, notifier)
             logger.info(f"Successfully processed job {job_id}")
         except Exception:
             logger.exception("Worker failed processing message")

@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+makai_challenge.egg-info/PKG-INFO
+makai_challenge.egg-info/SOURCES.txt
+makai_challenge.egg-info/dependency_links.txt
+makai_challenge.egg-info/requires.txt
+makai_challenge.egg-info/top_level.txt
